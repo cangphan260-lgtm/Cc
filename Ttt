@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+-- RemoteEvents cần tạo trong ReplicatedStorage
+local PlantRequest = ReplicatedStorage:WaitForChild("PlantRequest")
+local HarvestRequest = ReplicatedStorage:WaitForChild("HarvestRequest")
+
+-- =========================
+-- SETTINGS
+-- =========================
+
+local AUTO_PLANT = true
+local AUTO_FARM = true
+
+local PLANT_DELAY = 2
+local FARM_DELAY = 1
+
+-- =========================
+-- UI
+-- =========================
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "AdminTestClient"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.fromOffset(300, 55)
+status.Position = UDim2.new(0, 20, 0, 80)
+status.BackgroundTransparency = 0.2
+status.TextScaled = true
+status.Text = "🌱 Client đang chạy"
+status.Parent = gui
+
+-- =========================
+-- AUTO PLANT
+-- =========================
+
+task.spawn(function()
+	while AUTO_PLANT do
+		task.wait(PLANT_DELAY)
+
+		-- Server sẽ tự kiểm tra:
+		-- người chơi có quyền không
+		-- có hạt giống không
+		-- vị trí có phải đất hợp lệ không
+
+		PlantRequest:FireServer()
+	end
+end)
+
+-- =========================
+-- AUTO FARM
+-- =========================
+
+task.spawn(function()
+	while AUTO_FARM do
+		task.wait(FARM_DELAY)
+
+		-- Server quyết định cây nào có thể thu hoạch
+		HarvestRequest:FireServer()
+	end
+end)
+
+-- =========================
+-- THÔNG BÁO SÉT
+-- =========================
+
+local function showLightning()
+	status.Text = "⚡ SÉT ĐANG ĐÁNH!"
+
+	task.delay(3, function()
+		if status then
+			status.Text = "🌱 Client đang chạy"
+		end
+	end)
+end
+
+-- RemoteEvent LightningWarning
+local LightningWarning =
+	ReplicatedStorage:WaitForChild("LightningWarning")
+
+LightningWarning.OnClientEvent:Connect(function()
+	showLightning()
+end)
