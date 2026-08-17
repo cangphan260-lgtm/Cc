@@ -1,0 +1,55 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+
+-- GUI cảnh báo
+local gui = Instance.new("ScreenGui")
+gui.Name = "LightningDetector"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local alert = Instance.new("TextLabel")
+alert.Size = UDim2.fromOffset(420, 70)
+alert.Position = UDim2.new(0.5, -210, 0.12, 0)
+alert.BackgroundTransparency = 0.15
+alert.TextScaled = true
+alert.Font = Enum.Font.GothamBold
+alert.Text = "⚡ PHÁT HIỆN SÉT!"
+alert.Visible = false
+alert.Parent = gui
+
+local lastAlert = 0
+local cooldown = 2
+
+local function isLightning(object)
+	local name = string.lower(object.Name)
+
+	return string.find(name, "lightning")
+		or string.find(name, "thunder")
+		or string.find(name, "strike")
+end
+
+local function showAlert(object)
+	if os.clock() - lastAlert < cooldown then
+		return
+	end
+
+	lastAlert = os.clock()
+
+	alert.Text = "⚡ PHÁT HIỆN SÉT!\n" .. object.Name
+	alert.Visible = true
+
+	task.delay(3, function()
+		alert.Visible = false
+	end)
+end
+
+-- Theo dõi object mới xuất hiện trong Workspace
+Workspace.DescendantAdded:Connect(function(object)
+	if isLightning(object) then
+		showAlert(object)
+	end
+end)
+
+print("⚡ Lightning Detector đã bật")
