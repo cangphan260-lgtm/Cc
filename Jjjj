@@ -1,0 +1,28 @@
+-- ServerScriptService/AdminDupe.server.lua
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local ADMIN_IDS = {
+    [123456789] = true, -- thay bằng UserId của bạn
+}
+
+local DupeEvent = Instance.new("RemoteEvent")
+DupeEvent.Name = "AdminDupeSeed"
+DupeEvent.Parent = ReplicatedStorage
+
+DupeEvent.OnServerEvent:Connect(function(player, seedName, amount)
+    if not ADMIN_IDS[player.UserId] then
+        return
+    end
+
+    amount = tonumber(amount)
+    if not amount or amount < 1 or amount > 1000 then
+        return
+    end
+
+    -- Gọi hệ thống inventory của game tại đây
+    -- Inventory:AddSeed(player, seedName, amount)
+
+    print(player.Name, "duped", amount, seedName)
+end)
