@@ -1,0 +1,530 @@
+--// ⚡ LIGHTNING AUTO HARVEST - ROBLOX MOBILE MENU
+--// LocalScript
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+
+local Player = Players.LocalPlayer
+
+--==================================================
+-- SETTINGS
+--==================================================
+
+local Settings = {
+    AutoLightning = true,
+    AutoHarvest = true,
+    Notification = true,
+    HarvestDistance = 80,
+    ScanDelay = 0.15
+}
+
+--==================================================
+-- GUI
+--==================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "LightningAutoHarvest"
+Gui.ResetOnSpawn = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = Player:WaitForChild("PlayerGui")
+
+-- Nút mở menu
+local OpenButton = Instance.new("TextButton")
+OpenButton.Name = "OpenButton"
+OpenButton.Size = UDim2.fromOffset(52, 52)
+OpenButton.Position = UDim2.new(0, 15, 0.5, -26)
+OpenButton.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+OpenButton.Text = "⚡"
+OpenButton.TextSize = 25
+OpenButton.TextColor3 = Color3.new(1, 1, 1)
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.Parent = Gui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(1, 0)
+OpenCorner.Parent = OpenButton
+
+local OpenStroke = Instance.new("UIStroke")
+OpenStroke.Thickness = 2
+OpenStroke.Color = Color3.fromRGB(255, 200, 60)
+OpenStroke.Parent = OpenButton
+
+-- Menu chính
+local Main = Instance.new("Frame")
+Main.Name = "MainMenu"
+Main.Size = UDim2.fromOffset(320, 390)
+Main.Position = UDim2.new(0.5, -160, 0.5, -195)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Main.Visible = true
+Main.Parent = Gui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = Main
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Thickness = 1.5
+MainStroke.Color = Color3.fromRGB(65, 65, 75)
+MainStroke.Parent = Main
+
+--==================================================
+-- HEADER
+--==================================================
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 58)
+Header.BackgroundTransparency = 1
+Header.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.fromOffset(18, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "⚡ Lightning Harvest"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Header
+
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Size = UDim2.new(1, -80, 0, 18)
+SubTitle.Position = UDim2.fromOffset(19, 34)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "Mobile Control Panel"
+SubTitle.TextColor3 = Color3.fromRGB(150, 150, 160)
+SubTitle.TextSize = 11
+SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.Parent = Header
+
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.fromOffset(38, 38)
+Close.Position = UDim2.new(1, -48, 0, 10)
+Close.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+Close.Text = "×"
+Close.TextColor3 = Color3.new(1, 1, 1)
+Close.TextSize = 25
+Close.Font = Enum.Font.Gotham
+Close.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 10)
+CloseCorner.Parent = Close
+
+--==================================================
+-- SCROLL AREA
+--==================================================
+
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 1, -72)
+Scroll.Position = UDim2.fromOffset(10, 62)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 3
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.Parent = Main
+
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 8)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Parent = Scroll
+
+local Padding = Instance.new("UIPadding")
+Padding.PaddingLeft = UDim.new(0, 4)
+Padding.PaddingRight = UDim.new(0, 4)
+Padding.PaddingBottom = UDim.new(0, 10)
+Padding.Parent = Scroll
+
+--==================================================
+-- TOGGLE FUNCTION
+--==================================================
+
+local function CreateToggle(text, setting)
+
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, -8, 0, 55)
+    Button.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+    Button.Text = ""
+    Button.AutoButtonColor = false
+    Button.Parent = Scroll
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = Button
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -80, 1, 0)
+    Label.Position = UDim2.fromOffset(14, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.new(1, 1, 1)
+    Label.TextSize = 14
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.GothamMedium
+    Label.Parent = Button
+
+    local Status = Instance.new("TextLabel")
+    Status.Size = UDim2.fromOffset(55, 25)
+    Status.Position = UDim2.new(1, -65, 0.5, -12)
+    Status.BackgroundColor3 = Settings[setting]
+        and Color3.fromRGB(70, 190, 110)
+        or Color3.fromRGB(80, 80, 88)
+    Status.Text = Settings[setting] and "ON" or "OFF"
+    Status.TextColor3 = Color3.new(1, 1, 1)
+    Status.TextSize = 11
+    Status.Font = Enum.Font.GothamBold
+    Status.Parent = Button
+
+    local StatusCorner = Instance.new("UICorner")
+    StatusCorner.CornerRadius = UDim.new(1, 0)
+    StatusCorner.Parent = Status
+
+    Button.Activated:Connect(function()
+
+        Settings[setting] = not Settings[setting]
+
+        Status.Text = Settings[setting] and "ON" or "OFF"
+
+        Status.BackgroundColor3 =
+            Settings[setting]
+            and Color3.fromRGB(70, 190, 110)
+            or Color3.fromRGB(80, 80, 88)
+
+    end)
+
+    return Button
+end
+
+CreateToggle("⚡ Auto Lightning Detect", "AutoLightning")
+CreateToggle("🌱 Auto Harvest", "AutoHarvest")
+CreateToggle("🔔 Notification", "Notification")
+
+--==================================================
+-- DISTANCE
+--==================================================
+
+local DistanceBox = Instance.new("TextButton")
+DistanceBox.Size = UDim2.new(1, -8, 0, 55)
+DistanceBox.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+DistanceBox.Text = ""
+DistanceBox.Parent = Scroll
+
+local DistanceCorner = Instance.new("UICorner")
+DistanceCorner.CornerRadius = UDim.new(0, 10)
+DistanceCorner.Parent = DistanceBox
+
+local DistanceLabel = Instance.new("TextLabel")
+DistanceLabel.Size = UDim2.new(1, -100, 1, 0)
+DistanceLabel.Position = UDim2.fromOffset(14, 0)
+DistanceLabel.BackgroundTransparency = 1
+DistanceLabel.Text = "📏 Harvest Distance"
+DistanceLabel.TextColor3 = Color3.new(1, 1, 1)
+DistanceLabel.TextSize = 14
+DistanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+DistanceLabel.Font = Enum.Font.GothamMedium
+DistanceLabel.Parent = DistanceBox
+
+local DistanceValue = Instance.new("TextLabel")
+DistanceValue.Size = UDim2.fromOffset(70, 30)
+DistanceValue.Position = UDim2.new(1, -82, 0.5, -15)
+DistanceValue.BackgroundColor3 = Color3.fromRGB(50, 50, 58)
+DistanceValue.Text = tostring(Settings.HarvestDistance)
+DistanceValue.TextColor3 = Color3.new(1, 1, 1)
+DistanceValue.TextSize = 13
+DistanceValue.Font = Enum.Font.GothamBold
+DistanceValue.Parent = DistanceBox
+
+local DistanceValueCorner = Instance.new("UICorner")
+DistanceValueCorner.CornerRadius = UDim.new(0, 8)
+DistanceValueCorner.Parent = DistanceValue
+
+DistanceBox.Activated:Connect(function()
+
+    if Settings.HarvestDistance == 80 then
+        Settings.HarvestDistance = 120
+    elseif Settings.HarvestDistance == 120 then
+        Settings.HarvestDistance = 200
+    else
+        Settings.HarvestDistance = 80
+    end
+
+    DistanceValue.Text = tostring(Settings.HarvestDistance)
+
+end)
+
+--==================================================
+-- NOTIFICATION
+--==================================================
+
+local function Notify(text)
+
+    if not Settings.Notification then
+        return
+    end
+
+    pcall(function()
+
+        game:GetService("StarterGui"):SetCore(
+            "SendNotification",
+            {
+                Title = "⚡ Lightning Harvest",
+                Text = text,
+                Duration = 3
+            }
+        )
+
+    end)
+
+end
+
+--==================================================
+-- CHARACTER
+--==================================================
+
+local function GetRoot()
+
+    local Character = Player.Character
+
+    if not Character then
+        return nil
+    end
+
+    return Character:FindFirstChild("HumanoidRootPart")
+
+end
+
+--==================================================
+-- DETECT STORM
+--==================================================
+
+local StormNames = {
+    "Lightning",
+    "Thunder",
+    "Storm",
+    "Thunderstorm",
+    "Electric",
+    "Strike"
+}
+
+local function DetectStorm()
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+
+        local name = string.lower(obj.Name)
+
+        for _, keyword in ipairs(StormNames) do
+
+            if string.find(name, string.lower(keyword), 1, true) then
+                return true
+            end
+
+        end
+
+    end
+
+    return false
+
+end
+
+--==================================================
+-- HARVEST
+--==================================================
+
+local function Harvest()
+
+    if not Settings.AutoHarvest then
+        return
+    end
+
+    local Root = GetRoot()
+
+    if not Root then
+        return
+    end
+
+    local count = 0
+
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+
+        if obj:IsA("ProximityPrompt") then
+
+            local Name = string.lower(obj.Name)
+
+            local IsHarvest =
+                string.find(Name, "harvest", 1, true)
+                or string.find(Name, "collect", 1, true)
+                or string.find(Name, "pick", 1, true)
+                or string.find(Name, "thu", 1, true)
+
+            if IsHarvest then
+
+                local Part = obj.Parent
+
+                if Part and Part:IsA("BasePart") then
+
+                    local Distance =
+                        (Root.Position - Part.Position).Magnitude
+
+                    if Distance <= Settings.HarvestDistance then
+
+                        pcall(function()
+                            fireproximityprompt(obj)
+                        end)
+
+                        count += 1
+
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+
+    if count > 0 then
+        Notify("🌱 Đã thu hoạch " .. count .. " cây")
+    end
+
+end
+
+--==================================================
+-- LIGHTNING LOOP
+--==================================================
+
+local LastStorm = false
+
+task.spawn(function()
+
+    while task.wait(Settings.ScanDelay) do
+
+        if Settings.AutoLightning then
+
+            local Storm = DetectStorm()
+
+            if Storm and not LastStorm then
+
+                LastStorm = true
+
+                Notify("⚡ Phát hiện dấu hiệu sét!")
+
+                task.wait(0.05)
+
+                Harvest()
+
+            elseif not Storm then
+
+                LastStorm = false
+
+            end
+
+        end
+
+    end
+
+end)
+
+--==================================================
+-- OPEN / CLOSE
+--==================================================
+
+Close.Activated:Connect(function()
+
+    Main.Visible = false
+    OpenButton.Visible = true
+
+end)
+
+OpenButton.Activated:Connect(function()
+
+    Main.Visible = true
+    OpenButton.Visible = false
+
+end)
+
+OpenButton.Visible = false
+
+--==================================================
+-- DRAG MENU - MOBILE
+--==================================================
+
+local dragging = false
+local dragStart
+local startPosition
+
+local function UpdateDrag(input)
+
+    local Delta = input.Position - dragStart
+
+    Main.Position = UDim2.new(
+        startPosition.X.Scale,
+        startPosition.X.Offset + Delta.X,
+        startPosition.Y.Scale,
+        startPosition.Y.Offset + Delta.Y
+    )
+
+end
+
+Header.InputBegan:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+        dragging = true
+        dragStart = input.Position
+        startPosition = Main.Position
+
+    end
+
+end)
+
+Header.InputChanged:Connect(function(input)
+
+    if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseMovement then
+
+        input.Changed:Connect(function()
+
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+
+        end)
+
+    end
+
+end)
+
+UIS.InputChanged:Connect(function(input)
+
+    if dragging then
+
+        if input.UserInputType == Enum.UserInputType.Touch
+            or input.UserInputType == Enum.UserInputType.MouseMovement then
+
+            UpdateDrag(input)
+
+        end
+
+    end
+
+end)
+
+--==================================================
+-- UPDATE CANVAS
+--==================================================
+
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+
+    Scroll.CanvasSize = UDim2.fromOffset(
+        0,
+        Layout.AbsoluteContentSize.Y + 15
+    )
+
+end)
+
+Notify("Menu đã bật ⚡")
