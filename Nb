@@ -1,0 +1,189 @@
+-- LocalScript: AutoHarvestMenu.lua
+-- Đặt file này trong: StarterPlayer / StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- TRẠNG THÁI HỆ THỐNG
+local isAutoHarvestActive = true
+local isMenuOpen = true
+
+--------------------------------------------------------------------------------
+-- 1. TẠO GIAO DIỆN MENU (GUI)
+--------------------------------------------------------------------------------
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GreedyFarmerMenu"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Khung chứa Menu chính
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 200, 0, 130)
+mainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true -- Có thể kéo thả trên màn hình
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = mainFrame
+
+-- Tiêu đề Menu
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "🌱 MENU CHỐNG SÉT"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 14
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Parent = mainFrame
+
+-- Nút Bật/Tắt Auto Thu Hoạch
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Size = UDim2.new(0.85, 0, 0, 35)
+toggleBtn.Position = UDim2.new(0.075, 0, 0.35, 0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113) -- Màu xanh lá (BẬT)
+toggleBtn.Text = "Tự Động: BẬT"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.TextSize = 14
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.Parent = mainFrame
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.Parent = toggleBtn
+
+-- Trạng thái thông báo bên dưới
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Position = UDim2.new(0, 0, 0.75, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Đang quét tín hiệu sét..."
+statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+statusLabel.TextSize = 11
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.Parent = mainFrame
+
+-- Nút Thu Nhỏ/Mở Rộng Menu (Icon tròn lá cây)
+local openCloseBtn = Instance.new("TextButton")
+openCloseBtn.Name = "OpenCloseBtn"
+openCloseBtn.Size = UDim2.new(0, 40, 0, 40)
+openCloseBtn.Position = UDim2.new(0.05, 0, 0.22, 0)
+openCloseBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+openCloseBtn.Text = "🌱"
+openCloseBtn.TextSize = 20
+openCloseBtn.Parent = screenGui
+
+local miniCorner = Instance.new("UICorner")
+miniCorner.CornerRadius = UDim.new(1, 0)
+miniCorner.Parent = openCloseBtn
+
+--------------------------------------------------------------------------------
+-- 2. XỬ LÝ SỰ KIỆN MENU (UI LOGIC)
+--------------------------------------------------------------------------------
+-- Đóng / Mở Menu
+openCloseBtn.MouseButton1Click:Connect(function()
+	isMenuOpen = not isMenuOpen
+	mainFrame.Visible = isMenuOpen
+end)
+
+-- Chuyển trạng thái Bật / Tắt Auto
+toggleBtn.MouseButton1Click:Connect(function()
+	isAutoHarvestActive = not isAutoHarvestActive
+	if isAutoHarvestActive then
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+		toggleBtn.Text = "Tự Động: BẬT"
+		statusLabel.Text = "Đang quét tín hiệu sét..."
+	else
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+		toggleBtn.Text = "Tự Động: TẮT"
+		statusLabel.Text = "Đã tạm dừng"
+	end
+end)
+
+--------------------------------------------------------------------------------
+-- 3. CHỨC NĂNG THU HOẠCH TỐI ƯU (ERROR-PROOF HARVEST)
+--------------------------------------------------------------------------------
+local function executeSafeHarvest()
+	if not isAutoHarvestActive then return end
+
+	-- Cách 1: Tự động click vào tất cả các nút "Thu hoạch" hoặc "Sưu tầm" trên Gui
+	pcall(function()
+		for _, gui in ipairs(playerGui:GetChildren()) do
+			if gui:IsA("ScreenGui") and gui.Name ~= "GreedyFarmerMenu" then
+				for _, btn in ipairs(gui:GetDescendants()) do
+					if btn:IsA("TextButton") or btn:IsA("ImageButton") then
+						local btnText = btn:IsA("TextButton") and btn.Text or btn.Name
+						if string.find(btnText, "Thu hoạch") or string.find(btnText, "Sưu tầm") or string.find(btnText, "Harvest") then
+							-- Kích hoạt click an toàn bằng pcall
+							pcall(function()
+								for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do conn:Fire() end
+								for _, conn in ipairs(getconnections(btn.Activated)) do conn:Fire() end
+							end)
+						end
+					end
+				end
+			end
+		end
+	end)
+
+	-- Cách 2: Gửi lệnh qua các RemoteEvent thu hoạch của game
+	pcall(function()
+		for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+			if obj:IsA("RemoteEvent") then
+				local name = string.lower(obj.Name)
+				if string.find(name, "harvest") or string.find(name, "collect") or string.find(name, "sell") then
+					pcall(function() obj:FireServer() end)
+				end
+			end
+		end
+	end)
+end
+
+--------------------------------------------------------------------------------
+-- 4. NHẬN BIẾT SÉT ĐÁNH VÀ TỰ ĐỘNG KÍCH HOẠT
+--------------------------------------------------------------------------------
+
+-- Phát hiện khi xuất hiện hiệu ứng Tia sét hoặc Đổi màu bầu trời
+Lighting.Changed:Connect(function(property)
+	if not isAutoHarvestActive then return end
+	
+	-- Khi trời tối sập xuống (giống trong Video)
+	if property == "ClockTime" or property == "Brightness" or property == "OutdoorAmbient" then
+		if Lighting.Brightness < 1 or Lighting.ClockTime > 18 or Lighting.ClockTime < 6 then
+			statusLabel.Text = "⚡ CẢNH BÁO SÉT!"
+			executeSafeHarvest()
+		end
+	end
+end)
+
+-- Quét sự kiện Sét xuất hiện trong Workspace
+Workspace.ChildAdded:Connect(function(child)
+	if not isAutoHarvestActive then return end
+	
+	local name = string.lower(child.Name)
+	if string.find(name, "lightning") or string.find(name, "strike") or string.find(name, "set") then
+		statusLabel.Text = "⚡ ĐÃ PHÁT HIỆN SÉT!"
+		executeSafeHarvest()
+	end
+end)
+
+-- Loop chạy ẩn liên tục quét nút "Sưu tầm" (Tốc độ 0.1s/lần)
+task.spawn(function()
+	while task.wait(0.1) do
+		if isAutoHarvestActive then
+			-- Tự động thu hoạch ngay khi thấy nút "Sưu tầm" xuất hiện trên màn hình
+			executeSafeHarvest()
+		end
+	end
+end)
